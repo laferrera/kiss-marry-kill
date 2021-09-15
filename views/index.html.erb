@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>KISS MARRY KILL Demo</title>
+    <%# <%= erb :head_partial %> 
+    <link href="assets/css/bootstrap.css" rel="stylesheet" media="screen">
+    <link href="assets/css/application.css" rel="stylesheet" media="screen">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  </head>
+  <body>
+    <div class="container">
+      <div class="jumbotron sketchy">
+        <h1 id="jumbo-h1">KISS MARRY KILL</h1>
+      </div>
+
+
+
+<%# game screen %>
+<div id="game-area">
+  <div id="player-zone" class="hide sketchy">
+  </div>
+  <div id="kmk-zone" class="hide">
+    <form id="game-round-form" class="form-inline">
+      <div id="option1" class="kmk-option sketchy">
+        <div id="option1-text" class="option-text"></div>
+        <div id="option1-img" class="option-img"></div>
+        <div id="option1-selection-icon" class="kmk-selection-icon"></div>
+        <input id="option1-selection" type="text" class="kmk-selection" placeholder="" />
+      </div>
+      <div id="option2" class="kmk-option sketchy">
+        <div id="option2-text" class="option-text"></div>
+        <div id="option2-img" class="option-img"></div>
+        <div id="option2-selection-icon" class="kmk-selection-icon"></div>
+        <input id="option2-selection" type="text" class="kmk-selection" placeholder="" />
+      </div>
+      <div id="option3" class="kmk-option sketchy">
+        <div id="option3-text" class="option-text"></div>
+        <div id="option3-img" class="option-img"></div>
+        <div id="option3-selection-icon" class="kmk-selection-icon"></div>
+        <input id="option3-selection" type="text" class="kmk-selection" placeholder="" />
+      </div>
+    </form>
+  </div>
+    <div id="summary-zone" class="hide">
+     <div class="current-round"></div>
+      <div id="summary-option1" class="kmk-option sketchy">
+        <div id="summary-option1-text" class="option-text"></div>
+        <div id="summary-option1-img" class="option-img"></div>
+        <div id="summary-option1-votes" class="option-votes"></div>
+      </div>
+      <div id="summary-option2" class="kmk-option sketchy">
+        <div id="summary-option2-text" class="option-text"></div>
+        <div id="summary-option2-img" class="option-img"></div>
+        <div id="summary-option2-votes" class="option-votes"></div>
+      </div>
+      <div id="summary-option3" class="kmk-option sketchy">
+        <div id="summary-option3-text" class="option-text"></div>
+        <div id="summary-option3-img" class="option-img"></div>
+        <div id="summary-option3-votes" class="option-votes"></div>
+      </div>
+    </div>
+</div>
+
+
+
+<%# controls %>
+  <div class="controls-container sketchy-no-before">
+        <div id="game-stage-info">
+        </div>
+
+    <div id="start-container">
+      <% if @host %>
+       <form id="game-create-form" class="form-inline">
+        <div class="form-group">
+          <input id="input-game-name" type="text" class="form-control" placeholder="Game Name" autofocus />
+        </div>
+        <button class="btn btn-primary" type="submit">Create</button>
+        </form>
+      <% end %>
+<%# start screen player %>            
+        <form id="game-code-form" class="form-inline">
+          <div class="form-group">
+            <input id="input-game-code" type="text" class="form-control" placeholder="Game Code" autofocus />
+          </div>
+          <button class="btn btn-primary" type="submit">Enter</button>
+        </form>      
+      </div>
+
+
+
+
+      <% if @host %>
+<%# host starts game when everyone has joined %>
+
+            <div class="persistent-room-code-container sketchy hide">
+              <h1 id="persistent-room-code">
+            </div>
+            <div id="game-start-controls" class="hide">
+              <button id="host-start-game" onclick="hostStartRound();" class="btn btn-primary">Start Game</button>
+            </div>
+            <div id="host-in-round-controls" class="hide">
+              <button id="end-round-gameplay" onclick="hostEndRound();" class="btn btn-primary">End Round</button>
+            </div>
+            <div id="host-summary-controls" class="hide">
+              <button id="show-kiss-summary" onclick="hostShowKissSummary();" class="btn btn-primary">Show Kiss Summary</button>
+              <button id="show-kiss-summary" onclick="hostShowMarrySummary();" class="btn btn-primary">Show Marry Summary</button>
+              <button id="show-kiss-summary" onclick="hostShowKillSummary();" class="btn btn-primary">Show Kill Summary</button>
+              <button id="start-round-gameplay" onclick="hostStartRound();" class="btn btn-primary">Next Round</button>
+            </div>
+      <% else %>
+            <div id="player-game-join-controls" class="hide">
+              <form id="player-game-join-form" class="form-inline">
+                <div class="form-group">
+                  <input id="input-player-name" type="text" class="form-control" placeholder="Enter Name" autofocus />
+                </div>
+                <button id="player-join-game" class="btn btn-primary" type="submit">Join Game</button>
+              </form>
+            </div>
+            <div id="player-in-round-controls" class="hide">
+              <div id="player-clear-kmk" onclick="clearKMKOptons();" class="btn btn-primary">Clear</div>
+              <div id="player-kiss" onclick="changeKMKMode('kiss');" class="btn btn-primary kmkButton">Kiss</div>
+              <div id="player-marry" onclick="changeKMKMode('marry');" class="btn btn-primary kmkButton">Marry</div>
+              <div id="player-kill" onclick="changeKMKMode('kill');"class="btn btn-primary kmkButton">Kill</div>
+              <br>
+              <div id="player-submit-kmk" onclick="submitRound()" class="btn btn-primary">Submit</div>
+            </div>
+      <% end %>
+  </div>      
+
+<%# chat %>
+      <div class="chat-container hide">
+        <div class="page-header">
+          <h1>Chat</h1>
+        </div>
+        <form id="chat-input-form" class="form-inline hide">
+          <div class="form-group">
+            <input id="input-chat-handle" type="text" class="form-control" placeholder="Enter handle" autofocus />
+          </div>
+          <div class="form-group">
+            <input id="input-chat-text" type="text" class="form-control" placeholder="Enter chat text here!" autofocus />
+          </div>
+          <button class="btn btn-primary" type="submit">Send</button>
+        </form>
+        <div id="chat-text">
+        </div>
+      </div>
+
+<%# event log %>
+      <div class="event-log-container">
+        <h5>Event Log</h5>
+        <div id="event-log">
+        </div>
+        <button class="btn btn-danger" type="submit" onclick="clearLocal();">clear local</button>
+      </div>
+
+    </div>
+
+    <script type="text/javascript" src="assets/js/jquery-2.0.3.min.js"></script>
+    <script>
+      var channel   = "<%= @channel %>";
+    </script>
+    <script type="text/javascript" src="assets/js/application.js"></script>
+  </body>
+</html>

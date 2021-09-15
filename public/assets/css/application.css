@@ -1,0 +1,332 @@
+@font-face {
+  font-family: cookiemonster;
+  src: url(cookiemonster.otf);
+}
+
+@font-face {
+  font-family: balonka;
+  src: url(balonka.otf);
+}
+
+@font-face {
+  font-family: anotherhand;
+  src: url(JustAnotherHand-Regular.ttf);
+}
+
+*{
+  user-select: none;
+  text-transform:uppercase;
+  font-size: 2.5rem;
+  letter-spacing: 0.3ch;
+  font-family: anotherhand;
+}
+
+@keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Firefox < 16 */
+@-moz-keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Safari, Chrome and Opera > 12.1 */
+@-webkit-keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Internet Explorer */
+@-ms-keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Opera < 12.1 */
+@-o-keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+body{
+  z-index:2;
+}
+
+body::before {    
+      content: "";
+  background-image: url("../img/bgs/trapper4.jpg");
+  background-size:cover;
+  opacity: .4;
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  left: 0px; 
+  height:100vh;
+  width:100vw;
+  z-index:-1;
+}
+
+#chat-text {
+  overflow: auto;
+  height: 300px;
+}
+.btn-primary.active{
+  background-color: #449d44;
+  border-color: #419641;
+}
+
+#player-submit-kmk{
+  margin-top:16px;
+  width: 250px;
+  background-color:yellow;
+  color:#000;
+  border-color: #000;
+}
+
+.event-log-container{
+  display:none;
+  width: 200px;
+    overflow: auto;
+    font-size: 10px;
+    position: fixed;
+    top: 0;
+    right: 0;
+    background: rgba(255,255,255,0.8);
+    height: 250px;
+}
+
+.event-log-container .panel{
+
+  margin-bottom:2px;
+  border-top:none;
+}
+
+.option-img{
+  transition: opacity 100ms ease-in-out;
+}
+
+.option-img.selected{
+  transition: opacity 100ms ease-in-out;
+  opacity:0.4;
+}
+
+.option-img img{
+  width:100%
+}
+
+#player-in-round-controls{
+  text-align: center;;
+}
+
+#game-code-form{
+  margin-bottom:30px;
+}
+
+.kmk-option{
+  cursor:pointer;
+  text-align: center;
+  width:30%;
+  display: table-cell;
+  min-height: 300px;
+}
+
+.kmk-selection{
+  display:none;
+}
+
+.kmk-selection-icon{
+  height: 100px;
+  width: 100px;
+  background-size: cover;
+  margin-left: auto;
+  margin-right: auto;
+  /* position: absolute; */
+
+  position: absolute;
+    top:50%;
+    margin-top: -50px;
+    left: 50%;
+    margin-left: -50px;
+    -webkit-filter: drop-shadow(0px 0px 30px rgba(255,255,255,1));
+
+}
+
+.kmk-selection-icon.kill{
+  background-image: url("../img/knife.png");
+}
+
+.kmk-selection-icon.kiss{
+  background-image: url("../img/kiss.png");
+}
+
+.kmk-selection-icon.marry{
+  background-image: url("../img/ring.png");
+}
+
+
+.user-container{
+  text-align: center;;
+  width:100px;
+  display: inline-block;
+     -webkit-animation: fadein 2s; /* Safari, Chrome and Opera > 12.1 */
+       -moz-animation: fadein 2s; /* Firefox < 16 */
+        -ms-animation: fadein 2s; /* Internet Explorer */
+         -o-animation: fadein 2s; /* Opera < 12.1 */
+            animation: fadein 2s;
+}
+
+.user-container .user-name{
+  font-size:1.5rem;
+}
+
+.user-container img{
+  width:50px;
+}
+
+h1{
+  font-family: balonka;
+}
+
+
+
+#start-container{
+ /* background-image: url("../img/bgs/trapper4.jpg"); */
+}
+
+
+
+.sketchy,
+.sketchy-no-before {
+    padding: 4rem 8rem;
+    /* display: inline-block; */
+    border: 3px solid #333333;
+    border-radius: 2% 6% 5% 4% / 1% 1% 2% 4%;
+
+    background: #ffffff;
+    position: relative;
+}
+
+
+.sketchy::before {
+        content: '';
+        border: 2px solid #353535;
+        display: block;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate3d(-50%, -50%, 0) scale(1.015) rotate(0.5deg);
+        border-radius: 1% 1% 2% 4% / 2% 6% 5% 4%;
+}
+
+.kmk-option.sketchy,
+.controls-container,
+.jumbotron{
+  padding:10px;
+}
+
+
+.jumbotron{
+  text-align: center;
+  margin-left:auto;
+  margin-right:auto;
+  margin-top:20px;
+  display:block;
+}
+
+.jumbotron h1{
+  /* background-image: linear-gradient(to left, violet, indigo, blue, green, yellow, orange, red);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; */
+  line-height: 80px;
+}
+
+
+#player-zone,
+.controls-container,
+#kmk-zone,
+#summary-zone{
+  margin-left: auto;
+  margin-right: auto;
+  width: 80%;
+  text-align: center;
+  display: block;
+}
+
+.controls-container{
+  margin-top:50px;
+}
+
+#game-stage-info,
+.option-text,
+.btn,
+.form-control{
+  text-transform:uppercase;
+  font-size: 2.5rem;
+  letter-spacing: 0.3ch;
+  font-family: anotherhand;
+}
+
+.form-control{
+      height: 50px;
+}
+
+.persistent-room-code-container{
+  padding: 10px;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background:#000;;
+}
+
+.persistent-room-code-container h1{
+  color:#fff;
+  font-size:20px;
+}
+
+@media (max-width: 900px) {
+  #player-zone,
+.controls-container,
+#kmk-zone,
+#summary-zone{
+  width:100%
+}
+}
+
+
+@media (max-width:645px){
+
+  .user-container{
+    width: 60px;
+  }
+
+  .container{
+    padding-left:5px;
+    padding-right:5px;
+  }
+
+  #jumbo-h1{
+    font-size:28px;
+    line-height:54px;
+    margin:0;
+  }
+
+  .kmk-option.sketchy{
+    padding:5px;
+    min-height: 160px;
+  }
+
+  .btn{
+    font-size: 18px;
+    letter-spacing: 0.2ch;
+    padding: 6px 12px;
+  }
+  .option-img img {
+    /* max-height: 75px; */
+  }
+  
+}

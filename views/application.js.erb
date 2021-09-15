@@ -1,0 +1,434 @@
+
+var host = "<%= @host %>";
+var scheme = "<%= @scheme %>";
+var ws;
+var user;
+var user_id;
+var players = []
+var game;
+var questions;
+var kmkMode;
+let kmkModes = ["kiss","marry","kill"]
+
+var connectToWs = function(){
+  var uri = scheme + window.document.location.host + "/" + channel;
+  ws = new WebSocket(uri);
+  if (ws.CONNECTING) { console.log("connecting to :" + uri)}
+  ws.onmessage = function (message) {
+    var data = JSON.parse(message.data);
+    if(data.type == "chat"){
+      $("#chat-text").prepend("<div class='panel panel-default'><div class='panel-heading'>" + data.handle + "</div><div class='panel-body'>" + data.text + "</div></div>");
+    }
+    if (data.type == "user_joined") {
+        var userData = data.data.user
+        players.push(userData);
+        uniquePlayers();
+      let userDiv = $('<div>', { class: "user-container" });
+      userDiv.prepend($('<img>', { src: userData.avatar_url }))
+      userDiv.prepend($('<div>', { class: "user-name", html: userData.name }))
+      $("#player-zone").append(userDiv);
+      // $("#player-zone").prepend("<div class='panel panel-default'><div class='panel-heading'>" + userData.name + "</div><div class='panel-body'>" + userData.id + "</div><img src='" + userData.avatar_url + "'/></div>");
+    }
+    if (data.type == "game_update"){
+      var gameData = data.data.game;
+      game = gameData
+      if (gameData.status == "in_round") {
+        startRoundUI();
+      }
+      if (gameData.status == "end_round") {
+        endRoundUI();
+      }
+      if (gameData.status == "ended") {
+        gameEndedUI();
+      }
+    }
+    if (data.type == "summary") {
+      showRoundSummaryUI(data.data)
+    }
+
+    $("#event-log").prepend("<div class='panel panel-default'>" + message.data + "</div>");
+
+  };
+  if (ws.OPEN) { console.log("connected to :" + channel) }
+}
+
+window.addEventListener('pageshow', function () { reconnectToWSifNeedBe() });
+window.addEventListener('load', function () { reconnectToWSifNeedBe() });
+
+let reconnectToWSifNeedBe = function(){
+  var should_reconnect  = (ws.readyState == ws.CLOSED)
+  should_reconnect = (game && user && game.status != "ended")
+  if (should_reconnect){
+    connectToWs();
+    getGameStatusAndGoToThere();
+  }
+}
+
+function onlyUnique(value, index, self) {
+  return self.indexOf(value) === index;
+}
+
+let uniquePlayers = function(){
+  players = players.filter(onlyUnique);
+}
+
+let clearLocal = function(){
+  window.localStorage.clear();
+}
+
+// get users
+let getPlayers = function () {
+  var url = "/games/" + channel + "/players";
+  $.get(url, function (data) {
+    let users = JSON.parse(data).users;
+    for (let i = 0; i < users.length; i++) {
+      u = users[i]
+      if(u.id == user_id){
+        user = u;
+      }
+      if (players.indexOf(u) < 0){
+        players.push(u);
+        let userDiv = $('<div>', { class: "user-container" });
+        userDiv.prepend($('<img>', { src: u.avatar_url }))
+        userDiv.prepend($('<div>', { class: "user-name", html: u.name }))
+        $("#player-zone").append(userDiv);
+        // $("#player-zone").prepend("<div class='panel panel-default'><div class='panel-heading'>" + u.name + "</div><div class='panel-body'>" + u.id + "</div><img src='" + u.avatar_url + "'/></div>");
+      }
+    }
+  });
+}
+
+// render player round
+
+let renderRound = function(){
+  let question = questions[game.current_round]
+  // $(".current-round").html("current round is: " + game.current_round.toString())
+  $("#option1-text").html(question.option_1)
+  $("#option1-img").html("")
+  $("#option1-img").prepend($('<img>', {src: question.option_1_img_url }))
+  $("#option2-text").html(question.option_2)
+  $("#option2-img").html("")
+  $("#option2-img").prepend($('<img>', { src: question.option_2_img_url }))
+  $("#option3-text").html(question.option_3)
+  $("#option3-img").html("")
+  $("#option3-img").prepend($('<img>', { src: question.option_3_img_url }))
+  kmkMode = "kiss";
+  clearKMKOptons();
+}
+
+let renderSummary = function () {
+  // $(".current-round").html("current round is: " + game.current_round.toString())
+  $('#summary-option1-votes').html("")
+  $('#summary-option2-votes').html("")
+  $('#summary-option3-votes').html("")
+  let question = questions[game.current_round]
+  $("#summary-option1-text").html(question.option_1)
+  $("#summary-option1-img").html("")
+  $("#summary-option1-img").prepend($('<img>', { src: question.option_1_img_url }))
+  $("#summary-option2-text").html(question.option_2)
+  $("#summary-option2-img").html("")
+  $("#summary-option2-img").prepend($('<img>', { src: question.option_2_img_url }))
+  $("#summary-option3-text").html(question.option_3)
+  $("#summary-option3-img").html("")
+  $("#summary-option3-img").prepend($('<img>', { src: question.option_3_img_url }))
+}
+
+let hostEndRound = function(){
+  var data = { current_round: game.current_round };
+  data = JSON.stringify(data);
+  console.log("ending round: " + game.current_round);
+  url = "/games/" + channel + "/end_round";
+  $.post(url, data, function (data) {
+    data = JSON.parse(data);
+    if (data.game) {
+      game = data.game;
+    }
+  });
+}
+
+let hostStartRound = function () {
+  var data = { current_round: game.current_round };
+  data = JSON.stringify(data);
+  console.log("start round: " + (game.current_round + 1))
+  url = "/games/" + channel + "/start_round";
+  $.post(url, data, function (data) {
+    data = JSON.parse(data);
+    if (data.game) {
+      game = data.game;
+    }
+  });
+}
+
+let hostShowKissSummary = function(){
+  hostShowRoundSummary("kiss")
+}
+
+let hostShowMarrySummary = function () {
+  hostShowRoundSummary("marry")
+}
+
+let hostShowKillSummary = function () {
+  hostShowRoundSummary("kill")
+}
+
+let hostShowRoundSummary = function (mode) {
+  var data = { current_round: game.current_round , mode:mode};
+  data = JSON.stringify(data);
+  console.log("start round: " + (game.current_round + 1))
+  url = "/games/" + channel + "/show_round_summary";
+  $.post(url, data, function (data) {
+    data = JSON.parse(data);
+    if (data.game) {
+      game = data.game;
+    }
+  });
+}
+
+// getGameStatus and update UI
+let getGameStatusAndGoToThere = function() {
+  var url = "/games/" + channel;
+  $.get(url, function (data) {
+    data = JSON.parse(data);
+    game = data.game;
+    questions = data.questions;
+    var game_uid = window.localStorage.getItem('game_uid');
+    user_id = window.localStorage.getItem('user_id');
+    var user_is_in_game = (game_uid && user_id) || host;
+    if(game.status == "created"){
+      console.log("game is created")
+      joinScreen();
+      if (user_is_in_game) { waitToStart();}
+    } else if (game.status == "started") {
+      console.log("game is started")
+      joinScreen();
+      waitToStart()
+      startRoundUI();
+    } else if (game.status == "in_round"){
+      // we're in the round
+      joinScreen();
+      waitToStart()
+      startRoundUI();
+    } else if (game.status == "end_round") {
+      endRoundUI();
+    } else if (game.status == "ended") {
+      gameEndedUI();
+    }
+  });
+}
+
+// chat
+$("#chat-input-form").on("submit", function(event) {
+  event.preventDefault();
+  var handle = $("#input-chat-handle")[0].value;
+  var text   = $("#input-chat-text")[0].value;
+  ws.send(JSON.stringify({ type: "chat", handle: handle, text: text }));
+  $("#input-chat-text")[0].value = "";
+});
+
+// create game
+$("#game-create-form").on("submit", function(event) {
+  event.preventDefault();
+  var gameName = $("#input-game-name")[0].value;
+  var data = {game: {name:gameName}};
+  data = JSON.stringify(data);
+  $.post("/games", data, function( data ) {
+    data = JSON.parse(data);
+    if(data.game){
+      $("#chat-text").append("<div class='panel panel-default'><div class='panel-heading'> Game Name: " + data.game.name + " created </div><div class='panel-body'>Game Code: " + data.game.uid + "</div></div>");
+      channel = data.game.uid;
+      connectToWs();
+      // $("#start-container").remove();
+      // $("#chat-input-form").removeClass("hide");
+      joinScreen();
+    } else {
+      console.log("game could not be created");
+    }
+  });
+});
+
+// join room
+$("#game-code-form").on("submit", function (event) {
+  event.preventDefault();
+  var gameCode = $("#input-game-code")[0].value.toLowerCase();
+  var url = "/games/" + gameCode;
+  $.get(url, function (data) {
+    data = JSON.parse(data);
+    if(data.game){
+      channel = data.game.uid;
+      user_id = window.localStorage.getItem('user_id');
+      getPlayers();
+      connectToWs();
+      $("#chat-text").append("<div class='panel panel-default'><div class='panel-heading'> Game Name: " + data.game.name + " joined </div><div class='panel-body'>Game Code: " + data.game.uid + "</div></div>");
+      $("#start-container").remove();
+      $("#chat-input-form").removeClass("hide");
+      getGameStatusAndGoToThere();
+    } else {
+      console.log("no game for uid: " + gameCode)
+      alert("No games with that code!!");
+      //display error - no room
+    }
+  });
+});
+
+// join game
+$("#player-game-join-form").on("submit", function (event) {
+  event.preventDefault();
+  var url = "/games/" + channel + "/join";
+  var name = $("#input-player-name")[0].value;
+  data = JSON.stringify({ name: name});
+  $.post(url, data, function (response) {
+    user = JSON.parse(response).user;
+    const ttl = 60 * 60 * 30;
+    const game_uid_item = {
+      value: channel,
+      expiry: now.getTime() + ttl,
+    }
+    window.localStorage.setItem('game_uid', game_uid_item);
+    const user_id_item = {
+      value: user.id,
+      expiry: now.getTime() + ttl,
+    }
+    window.localStorage.setItem('user_id', user_id_item);
+    waitToStart();
+  });
+});
+
+
+//display changes (either from clicking or ws)
+
+let joinScreen = function(){
+  $("#player-zone").removeClass("hide");
+  $("#game-start-controls").removeClass("hide");
+  $("#player-game-join-controls").removeClass("hide");
+}
+
+let waitToStart = function(){
+  $("#game-stage-info").html("Waiting for other players");
+  $("#persistent-room-code").html("Room Code: " + game.uid);
+  $(".persistent-room-code-container").removeClass("hide");
+  $("#player-zone").removeClass("hide");
+  $("#player-game-join-controls").remove();
+}
+
+let startRoundUI = function(){
+  if (game.current_round < questions.length){
+    renderRound();
+    $("#game-stage-info ").html("Kiss, marry, kill!");
+    $("#game-start-controls").remove();
+    $("#player-game-join-controls").remove();
+    $("#player-zone").remove();
+    $("#summary-zone").addClass("hide");
+    $("#host-summary-controls").addClass("hide");
+    $("#kmk-zone").removeClass("hide");
+    $("#player-in-round-controls").removeClass("hide");
+    $("#host-in-round-controls").removeClass("hide");
+  }
+}
+
+let endRoundUI = function () {
+    renderSummary();    
+    $("#game-stage-info").html("Let's see who did what!");
+    $("#kmk-zone").addClass("hide");
+    $("#player-in-round-controls").addClass("hide");
+    $("#host-in-round-controls").addClass("hide");
+    $("#summary-zone").removeClass("hide");
+    $("#host-summary-controls").removeClass("hide");
+    
+}
+
+let gameEndedUI = function () {
+  $("#summary-zone").addClass("hide");
+  $("#kmk-zone").addClass("hide");
+  $("#player-in-round-controls").addClass("hide");
+  $("#host-summary-controls").addClass("hide");
+  $("#game-stage-info").html("Thanks for playing!");
+}
+
+
+
+
+let submitRound = function () {
+  var option1val = $("#option1-selection")[0].value;
+  var option2val = $("#option2-selection")[0].value;
+  var option3val = $("#option3-selection")[0].value;
+  var data = { option1: option1val, option2: option2val, option3: option3val, question_id: questions[game.current_round].id, user_id: user.id, game_id: game.id};
+  data = JSON.stringify(data);
+  let url = "/games/" + channel + "/round"
+  $.post(url, data, function (data) {
+    // store last submitted in local storage?
+    $("#player-in-round-controls").addClass("hide");
+    $("#game-stage-info").html("Waiting for other players to kiss, marry, and kill and stuff.");
+  });
+}
+
+
+
+let showRoundSummaryUI = function (summary) {  
+  $('#summary-option1-votes').html("")
+  $('#summary-option2-votes').html("")
+  $('#summary-option3-votes').html("")
+
+  var summaryText = ""
+  if (summary.mode == "kiss") { summaryText = "Who Kissed who?!?!"}
+  if (summary.mode == "marry") { summaryText = "And then they got married." }
+  if (summary.mode == "kill") { summaryText = "It'd be better if they were dead." }
+  $("#game-stage-info").html(summaryText);
+  Object.entries(summary.summary).forEach((option) => {
+    option[1].forEach((user) => {
+      let userDiv = $('<div>', {class: "user-container"});
+      userDiv.prepend($('<img>', { src: user.avatar_url }))
+      userDiv.prepend($('<div>', { class: "user-name", html: user.name }))
+      $("#summary-" + option[0] + "-votes").prepend(userDiv)
+    });
+  });
+}
+
+let endGame = function () {
+}
+
+
+// KMK round player stuff
+
+let clearKMKOptons = function(){
+  $('.kmk-selection-icon').removeClass("kiss marry kill");
+  $('.option-img').removeClass("selected");
+  var forms = document.querySelectorAll('.kmk-selection');
+  forms.forEach((f) => {
+      f.value = "";
+  });
+  $('.kmkButton').removeClass("active")
+  $("#player-" + kmkMode).addClass("active")
+}
+
+let changeKMKMode = function(mode){
+  if (mode) { kmkMode = mode;} 
+  else{
+    let kmkModeIndex = (kmkModes.indexOf(kmkMode) + 1) % kmkModes.length
+    kmkMode = kmkModes[kmkModeIndex]
+  }
+  $('.kmkButton').removeClass("active")
+  $("#player-" + kmkMode).addClass("active")
+}
+
+$(".kmk-option").on("click", function (event) {
+  event.preventDefault();
+  $('.kmk-selection-icon').removeClass(kmkMode)
+  var forms = document.querySelectorAll('.kmk-selection');
+  forms.forEach((f) => {
+    if (f.value == kmkMode){
+      f.value = "";
+      let optImg = f.parentElement.querySelector(".option-img");
+      $(optImg).removeClass("selected");
+    }
+  });
+  let selIcon = this.querySelector(".kmk-selection-icon");
+  $(selIcon).removeClass("kiss marry kill");
+  $(selIcon).addClass(kmkMode);
+  let formField = this.querySelector(".kmk-selection");
+  formField.value = kmkMode;
+  let optImg = this.querySelector(".option-img");
+  $(optImg).addClass("selected");
+
+
+  changeKMKMode();
+});
